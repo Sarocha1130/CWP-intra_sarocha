@@ -1,0 +1,10 @@
+import sys
+
+parameters = sys.argv[1:]
+
+if len(parameters) == 0:
+    print("none")
+else:
+    print(f"parameters: {len(parameters)}")
+    for parameter in parameters:
+        print(f"{parameter}: {len(parameter)}")
