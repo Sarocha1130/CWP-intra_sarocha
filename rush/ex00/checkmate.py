@@ -1,56 +1,126 @@
-def parse_board(board):
+PIECES = {"K", "Q", "R", "B", "P"}
+
+
+def _normalize_board(board):
     if not isinstance(board, str):
-        raise ValueError("The board must be a string.")
+        return None
+
     rows = board.splitlines()
+
+    if not rows:
+        return None
+
     size = len(rows)
-    if size == 0 or any(len(row) != size for row in rows):
-        raise ValueError("The board must be a nonempty square.")
-    kings = [
-        (row, column)
-        for row in range(size)
-        for column in range(size)
-        if rows[row][column] == "K"
-    ]
+
+    if any(len(row) != size for row in rows):
+        return None
+
+    kings = []
+
+    for row_index, row in enumerate(rows):
+        for col_index, cell in enumerate(row):
+            if cell == "K":
+                kings.append((row_index, col_index))
+
     if len(kings) != 1:
-        raise ValueError("The board must contain exactly one King.")
+        return None
+
     return rows, kings[0]
 
 
-def find_attackers(rows, king):
+def _ray_attacks_king(
+    rows,
+    king_row,
+    king_col,
+    row_step,
+    col_step,
+    attackers,
+):
     size = len(rows)
-    king_row, king_column = king
-    attackers = []
-    for column_step in (-1, 1):
-        row = king_row + 1
-        column = king_column + column_step
-        if 0 <= row < size and 0 <= column < size:
-            if rows[row][column] == "P":
-                attackers.append(("P", row, column))
+
+    row = king_row + row_step
+    col = king_col + col_step
+
+    while 0 <= row < size and 0 <= col < size:
+        cell = rows[row][col]
+
+        
+        if cell in PIECES:
+            return cell in attackers
+
+        row += row_step
+        col += col_step
+
+    return False
+
+
+def _is_in_check(rows, king_position):
+    king_row, king_col = king_position
+    size = len(rows)
+
+    pawn_row = king_row + 1
+
+    if pawn_row < size:
+        for col_step in (-1, 1):
+            pawn_col = king_col + col_step
+
+            if (
+                0 <= pawn_col < size
+                and rows[pawn_row][pawn_col] == "P"
+            ):
+                return True
+
+    
     directions = (
-        (-1, 0), (1, 0), (0, -1), (0, 1),
-        (-1, -1), (-1, 1), (1, -1), (1, 1)
+        (-1, 0),
+        (1, 0),
+        (0, -1),
+        (0, 1),
     )
-    for row_step, column_step in directions:
-        row = king_row + row_step
-        column = king_column + column_step
-        while 0 <= row < size and 0 <= column < size:
-            piece = rows[row][column]
-            if piece in "PBRQK":
-                diagonal = row_step != 0 and column_step != 0
-                if piece == "Q" or (diagonal and piece == "B"):
-                    attackers.append((piece, row, column))
-                elif not diagonal and piece == "R":
-                    attackers.append((piece, row, column))
-                break
-            row += row_step
-            column += column_step
-    return attackers
+
+    for row_step, col_step in directions:
+        if _ray_attacks_king(
+            rows,
+            king_row,
+            king_col,
+            row_step,
+            col_step,
+            {"R", "Q"},
+        ):
+            return True
+
+    
+    diagonals = (
+        (-1, -1),
+        (-1, 1),
+        (1, -1),
+        (1, 1),
+    )
+
+    for row_step, col_step in diagonals:
+        if _ray_attacks_king(
+            rows,
+            king_row,
+            king_col,
+            row_step,
+            col_step,
+            {"B", "Q"},
+        ):
+            return True
+
+    return False
 
 
 def checkmate(board):
-    try:
-        rows, king = parse_board(board)
-    except ValueError:
+    parsed = _normalize_board(board)
+
+    if parsed is None:
         print("Error")
         return
-    print("Success" if find_attackers(rows, king) else "Fail")
+
+    rows, king_position = parsed
+
+    if _is_in_check(rows, king_position):
+        print("Success")
+    else:
+        print("Fail")
