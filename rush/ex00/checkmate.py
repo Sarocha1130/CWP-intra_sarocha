@@ -12,7 +12,6 @@ def _normalize_board(board):
 
     size = len(rows)
 
-    # กระดานต้องเป็นสี่เหลี่ยมจัตุรัส
     if any(len(row) != size for row in rows):
         return None
 
@@ -23,7 +22,6 @@ def _normalize_board(board):
             if cell == "K":
                 kings.append((row_index, col_index))
 
-    # ต้องมี King เพียง 1 ตัว
     if len(kings) != 1:
         return None
 
@@ -46,7 +44,7 @@ def _ray_attacks_king(
     while 0 <= row < size and 0 <= col < size:
         cell = rows[row][col]
 
-        # เจอหมากตัวแรก ให้หยุดทันที
+        
         if cell in PIECES:
             return cell in attackers
 
@@ -60,9 +58,6 @@ def _is_in_check(rows, king_position):
     king_row, king_col = king_position
     size = len(rows)
 
-    # -------------------------
-    # Pawn
-    # -------------------------
     pawn_row = king_row + 1
 
     if pawn_row < size:
@@ -75,10 +70,7 @@ def _is_in_check(rows, king_position):
             ):
                 return True
 
-    # -------------------------
-    # Rook / Queen
-    # แนวตั้งและแนวนอน
-    # -------------------------
+    
     directions = (
         (-1, 0),
         (1, 0),
@@ -97,10 +89,7 @@ def _is_in_check(rows, king_position):
         ):
             return True
 
-    # -------------------------
-    # Bishop / Queen
-    # แนวทแยง
-    # -------------------------
+    
     diagonals = (
         (-1, -1),
         (-1, 1),
